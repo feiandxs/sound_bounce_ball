@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "声控弹球",
+  "name": "声控弹球 | Sound Bounce Ball",
+  "description": "一个有趣的声音互动游戏，用声音控制小球跳动",
   "icons": [
     {
       "src": "favicon.ico",
@@ -21,5 +22,5 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#000000"
 }
