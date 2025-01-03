@@ -1,26 +1,21 @@
 {
-  "short_name": "声控弹球",
-  "name": "声控弹球 | Sound Bounce Ball",
-  "description": "一个有趣的声音互动游戏，用声音控制小球跳动",
+  "name": "Sound Bounce Ball",
+  "short_name": "Bounce Ball",
+  "description": "A bouncing ball game with sound effects",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/favicon_io/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
     },
     {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "/favicon_io/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#000000"
+  ]
 }
