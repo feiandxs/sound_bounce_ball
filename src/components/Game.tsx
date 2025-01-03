@@ -4,6 +4,7 @@ import { usePhysics } from '../hooks/usePhysics';
 import { useAudio } from '../hooks/useAudio';
 import Matter from 'matter-js';
 import Controls from './Controls';
+import VolumeHint from './VolumeHint';
 
 interface GameProps {
   width?: number;
@@ -26,6 +27,9 @@ const Game: React.FC<GameProps> = ({
   const [ballCount, setBallCount] = useState(INITIAL_BALL_COUNT);
   const [clickMode, setClickMode] = useState(false);
   const [sensitivity, setSensitivity] = useState(0.5);
+  const [forceMultiplier, setForceMultiplier] = useState(1.0);
+  const [showVolumeHint, setShowVolumeHint] = useState(true);
+  const [currentVolume, setCurrentVolume] = useState(0);
 
   // 初始化音频处理
   const { 
@@ -69,14 +73,16 @@ const Game: React.FC<GameProps> = ({
 
     const updateBalls = () => {
       if (isAudioInitialized) {
-        const currentVolume = analyzeVolume();
-        if (currentVolume && currentVolume > 0.01) {
-          // 增加基础力的大小，并添加随机的水平力
+        const volume = analyzeVolume();
+        if (volume && volume > 0.01) {
+          setCurrentVolume(volume);  // 更新当前音量
           const force = {
-            x: random(-0.02, 0.02) * currentVolume * sensitivity,  // 添加水平随机力
-            y: -0.1 * currentVolume * sensitivity                  // 增加向上的力
+            x: random(-0.05, 0.05) * volume * sensitivity * forceMultiplier,
+            y: -0.25 * volume * sensitivity * forceMultiplier
           };
           applyForceToAllBalls(force);
+        } else {
+          setCurrentVolume(0);
         }
       }
       animationId = requestAnimationFrame(updateBalls);
@@ -89,7 +95,7 @@ const Game: React.FC<GameProps> = ({
         cancelAnimationFrame(animationId);
       }
     };
-  }, [isAudioInitialized, analyzeVolume, applyForceToAllBalls, sensitivity]);
+  }, [isAudioInitialized, analyzeVolume, applyForceToAllBalls, sensitivity, forceMultiplier]);
 
   // 渲染循环
   useEffect(() => {
@@ -218,6 +224,11 @@ const Game: React.FC<GameProps> = ({
         ref={canvasRef}
         className={styles.gameCanvas}
       />
+      <VolumeHint 
+        volume={currentVolume}
+        force={forceMultiplier}
+        visible={showVolumeHint}
+      />
       <Controls
         ballCount={ballCount}
         onAddBall={handleAddBall}
@@ -228,6 +239,10 @@ const Game: React.FC<GameProps> = ({
         onClickModeChange={setClickMode}
         sensitivity={sensitivity}
         onSensitivityChange={handleSensitivityChange}
+        forceMultiplier={forceMultiplier}
+        onForceMultiplierChange={setForceMultiplier}
+        showVolumeHint={showVolumeHint}
+        onShowVolumeHintChange={setShowVolumeHint}
         audioError={audioError}
         onRequestAudioAccess={handleRequestAudioAccess}
       />

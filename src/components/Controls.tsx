@@ -11,6 +11,10 @@ interface ControlsProps {
   onClickModeChange: (enabled: boolean) => void;
   sensitivity: number;
   onSensitivityChange: (value: number) => void;
+  forceMultiplier: number;
+  onForceMultiplierChange: (value: number) => void;
+  showVolumeHint: boolean;
+  onShowVolumeHintChange: (enabled: boolean) => void;
   audioError?: string | null;
   onRequestAudioAccess?: () => void;
 }
@@ -25,6 +29,10 @@ const Controls: React.FC<ControlsProps> = ({
   onClickModeChange,
   sensitivity,
   onSensitivityChange,
+  forceMultiplier,
+  onForceMultiplierChange,
+  showVolumeHint,
+  onShowVolumeHintChange,
   audioError,
   onRequestAudioAccess
 }) => {
@@ -71,6 +79,17 @@ const Controls: React.FC<ControlsProps> = ({
           </label>
           <span className={styles.modeLabel}>点击生成模式</span>
         </div>
+        <div className={styles.modeSwitch}>
+          <label className={styles.switch}>
+            <input
+              type="checkbox"
+              checked={showVolumeHint}
+              onChange={(e) => onShowVolumeHintChange(e.target.checked)}
+            />
+            <span className={styles.slider}></span>
+          </label>
+          <span className={styles.modeLabel}>显示音量提示</span>
+        </div>
         <div className={styles.sensitivityControl}>
           <label className={styles.sensitivityLabel}>
             声音灵敏度: {Math.round(sensitivity * 100)}%
@@ -83,23 +102,36 @@ const Controls: React.FC<ControlsProps> = ({
             onChange={(e) => onSensitivityChange(Number(e.target.value) / 100)}
             className={styles.sensitivitySlider}
           />
-          {audioError && (
-            <div className={styles.audioError}>
-              <div className={styles.error}>
-                {audioError}
-              </div>
-              <button 
-                className={styles.retryButton}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRequestAudioAccess?.();
-                }}
-              >
-                重新请求麦克风权限
-              </button>
-            </div>
-          )}
         </div>
+        <div className={styles.sensitivityControl}>
+          <label className={styles.sensitivityLabel}>
+            力道大小: {Math.round(forceMultiplier * 100)}%
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="200"
+            value={forceMultiplier * 100}
+            onChange={(e) => onForceMultiplierChange(Number(e.target.value) / 100)}
+            className={styles.sensitivitySlider}
+          />
+        </div>
+        {audioError && (
+          <div className={styles.audioError}>
+            <div className={styles.error}>
+              {audioError}
+            </div>
+            <button 
+              className={styles.retryButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRequestAudioAccess?.();
+              }}
+            >
+              重新请求麦克风权限
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
