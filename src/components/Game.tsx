@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import styles from './Game.module.css';
 import { usePhysics } from '../hooks/usePhysics';
+import { useAudio } from '../hooks/useAudio';
 import Matter from 'matter-js';
 import Controls from './Controls';
 
@@ -10,20 +11,38 @@ interface GameProps {
 }
 
 const COLORS = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
-const INITIAL_BALL_COUNT = 5;
-const MAX_BALLS = 100;
+const INITIAL_BALL_COUNT = 50;
+const MAX_BALLS = 500;
 
 const Game: React.FC<GameProps> = ({ 
   width = window.innerWidth, 
   height = window.innerHeight 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { engine, world, addBall, addBallAtPosition } = usePhysics({ width, height });
+  const { engine, world, addBall, addBallAtPosition, applyForceToAllBalls } = usePhysics({ width, height });
   const requestRef = useRef<number>();
   const ballColors = useRef<Map<number, string>>(new Map());
   const ballsRef = useRef<Matter.Body[]>([]);
   const [ballCount, setBallCount] = useState(INITIAL_BALL_COUNT);
   const [clickMode, setClickMode] = useState(false);
+  const [sensitivity, setSensitivity] = useState(0.5);
+
+  // 初始化音频处理
+  const { 
+    isInitialized: isAudioInitialized,
+    volume,
+    error: audioError,
+    initAudio,
+    analyzeVolume,
+    setSensitivity: setAudioSensitivity,
+    cleanup: cleanupAudio
+  } = useAudio({ sensitivity });
+
+  // 初始化音频
+  useEffect(() => {
+    initAudio();
+    return () => cleanupAudio();
+  }, [initAudio, cleanupAudio]);
 
   // 初始化物理世界和小球
   useEffect(() => {
@@ -43,6 +62,34 @@ const Game: React.FC<GameProps> = ({
     console.log('Total balls:', balls.length);
     console.log('Ball positions:', balls.map(b => ({ x: b.position.x, y: b.position.y })));
   }, [addBall, world, width, height]);
+
+  // 声音影响小球
+  useEffect(() => {
+    let animationId: number;
+
+    const updateBalls = () => {
+      if (isAudioInitialized) {
+        const currentVolume = analyzeVolume();
+        if (currentVolume && currentVolume > 0.01) {
+          // 增加基础力的大小，并添加随机的水平力
+          const force = {
+            x: random(-0.02, 0.02) * currentVolume * sensitivity,  // 添加水平随机力
+            y: -0.1 * currentVolume * sensitivity                  // 增加向上的力
+          };
+          applyForceToAllBalls(force);
+        }
+      }
+      animationId = requestAnimationFrame(updateBalls);
+    };
+
+    updateBalls();
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, [isAudioInitialized, analyzeVolume, applyForceToAllBalls, sensitivity]);
 
   // 渲染循环
   useEffect(() => {
@@ -153,6 +200,12 @@ const Game: React.FC<GameProps> = ({
     console.log('New ball added at click position:', { id: ball.id, color, position: ball.position });
   };
 
+  // 处理灵敏度变化
+  const handleSensitivityChange = (newSensitivity: number) => {
+    setSensitivity(newSensitivity);
+    setAudioSensitivity(newSensitivity);
+  };
+
   return (
     <div className={styles.gameContainer} onClick={handleCanvasClick}>
       <canvas
@@ -167,9 +220,17 @@ const Game: React.FC<GameProps> = ({
         minBalls={1}
         clickMode={clickMode}
         onClickModeChange={setClickMode}
+        sensitivity={sensitivity}
+        onSensitivityChange={handleSensitivityChange}
+        audioError={audioError}
       />
     </div>
   );
+};
+
+// 辅助函数
+const random = (min: number, max: number) => {
+  return Math.random() * (max - min) + min;
 };
 
 export default Game;

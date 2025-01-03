@@ -10,6 +10,43 @@
   flex-direction: column;
   gap: 15px;
   z-index: 1000;
+  min-width: 200px;
+  transition: all 0.3s ease;
+}
+
+.controls.collapsed {
+  min-width: auto;
+  width: auto;
+  padding: 10px;
+}
+
+.controls.collapsed .controlsContent {
+  display: none;
+}
+
+.toggleButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+  transition: transform 0.3s ease;
+}
+
+.toggleButton:hover {
+  transform: scale(1.1);
+}
+
+.controlsContent {
+  margin-top: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .ballCount {
@@ -99,4 +136,45 @@ input:checked + .slider {
 
 input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* 灵敏度控制样式 */
+.sensitivityControl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sensitivityLabel {
+  color: white;
+  font-size: 14px;
+}
+
+.sensitivitySlider {
+  width: 100%;
+  height: 4px;
+  background: #666;
+  outline: none;
+  border-radius: 2px;
+  -webkit-appearance: none;
+}
+
+.sensitivitySlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sensitivitySlider::-webkit-slider-thumb:hover {
+  background: #45a049;
+}
+
+.error {
+  color: #ff4444;
+  font-size: 12px;
+  margin-top: 4px;
 } 

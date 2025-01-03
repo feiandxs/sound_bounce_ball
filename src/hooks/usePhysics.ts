@@ -11,9 +11,18 @@ const random = (min: number, max: number) => {
   return Math.random() * (max - min) + min;
 };
 
+// 球的配置
+const BALL_CONFIG = {
+  MIN_RADIUS: 10,
+  MAX_RADIUS: 25,
+  RESTITUTION: 0.7,  // 弹性
+  FRICTION: 0.01,    // 摩擦力
+  DENSITY: 0.002     // 密度
+};
+
 export const usePhysics = ({ width, height }: PhysicsOptions) => {
   const engineRef = useRef(Matter.Engine.create({
-    gravity: { x: 0, y: 0.5 }
+    gravity: { x: 0, y: 1.5 }  // 增加重力
   }));
   const worldRef = useRef(engineRef.current.world);
 
@@ -30,7 +39,6 @@ export const usePhysics = ({ width, height }: PhysicsOptions) => {
     ];
 
     Matter.World.add(worldRef.current, walls);
-    console.log('Walls created at:', walls.map(w => ({ x: w.position.x, y: w.position.y })));
 
     // 启动物理引擎
     const runner = Matter.Runner.create();
@@ -46,77 +54,62 @@ export const usePhysics = ({ width, height }: PhysicsOptions) => {
   // 在随机位置添加小球的方法
   const addBall = useCallback(() => {
     // 随机生成球的初始位置（在上方20%的区域内）
-    const x = random(50, width - 50);  // 距离边缘留出一定空间
-    const y = random(50, height * 0.2); // 在上方20%的区域内随机生成
+    const x = random(50, width - 50);
+    const y = random(50, height * 0.2);
+    const radius = random(BALL_CONFIG.MIN_RADIUS, BALL_CONFIG.MAX_RADIUS);
 
     const ball = Matter.Bodies.circle(
       x,
       y,
-      20,
+      radius,
       {
-        restitution: 0.8,  // 弹性
-        friction: 0.005,   // 摩擦力
-        density: 0.001,    // 密度
+        restitution: BALL_CONFIG.RESTITUTION,
+        friction: BALL_CONFIG.FRICTION,
+        density: BALL_CONFIG.DENSITY * (20 / radius), // 较小的球密度更大，让它们跳得更高
       }
     );
 
     // 添加随机初始力
     const force = {
-      x: random(-0.005, 0.005),  // 随机水平力
-      y: random(0, 0.005)        // 随机向下的力
+      x: random(-0.005, 0.005),
+      y: random(0, 0.005)
     };
 
     Matter.World.add(worldRef.current, ball);
     Matter.Body.applyForce(ball, ball.position, force);
-
-    console.log('Ball added:', { 
-      id: ball.id, 
-      position: ball.position,
-      force,
-      radius: (ball as any).circleRadius
-    });
     
     return ball;
   }, [width, height]);
 
   // 在指定位置添加小球的方法
   const addBallAtPosition = useCallback((x: number, y: number) => {
+    const radius = random(BALL_CONFIG.MIN_RADIUS, BALL_CONFIG.MAX_RADIUS);
     const ball = Matter.Bodies.circle(
       x,
       y,
-      20,
+      radius,
       {
-        restitution: 0.8,
-        friction: 0.005,
-        density: 0.001,
+        restitution: BALL_CONFIG.RESTITUTION,
+        friction: BALL_CONFIG.FRICTION,
+        density: BALL_CONFIG.DENSITY * (20 / radius),
       }
     );
 
-    // 添加较小的随机初始力
-    const force = {
-      x: random(-0.002, 0.002),
-      y: random(0, 0.002)
-    };
-
     Matter.World.add(worldRef.current, ball);
-    Matter.Body.applyForce(ball, ball.position, force);
-
-    console.log('Ball added at position:', {
-      id: ball.id,
-      position: ball.position,
-      force,
-      radius: (ball as any).circleRadius
-    });
-
     return ball;
   }, []);
 
-  // 对所有小球施加力的方法
-  const applyForceToAllBalls = useCallback((force: Matter.Vector) => {
+  // 对所有小球施加随机力的方法
+  const applyForceToAllBalls = useCallback((baseForce: Matter.Vector) => {
     const bodies = Matter.Composite.allBodies(worldRef.current);
     bodies.forEach(body => {
       if (!body.isStatic) {
-        Matter.Body.applyForce(body, body.position, force);
+        // 为每个球生成稍微不同的力
+        const randomizedForce = {
+          x: baseForce.x + random(-0.002, 0.002),
+          y: baseForce.y * random(0.8, 1.2)  // y方向的力有20%的随机变化
+        };
+        Matter.Body.applyForce(body, body.position, randomizedForce);
       }
     });
   }, []);
