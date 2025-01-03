@@ -126,29 +126,78 @@ const Game: React.FC<GameProps> = ({
       // 渲染所有物体
       const bodies = Matter.Composite.allBodies(world);
       
-      bodies.forEach(body => {
+      // 先渲染墙体
+      bodies.filter(body => body.isStatic).forEach(body => {
         ctx.beginPath();
-        
-        if (body.isStatic) {
-          // 渲染墙体
-          const vertices = body.vertices;
-          ctx.moveTo(vertices[0].x, vertices[0].y);
-          for (let j = 1; j < vertices.length; j++) {
-            ctx.lineTo(vertices[j].x, vertices[j].y);
-          }
-          ctx.lineTo(vertices[0].x, vertices[0].y);
-          ctx.fillStyle = '#333333';
-        } else {
-          // 渲染小球
-          const pos = body.position;
-          const radius = (body as Matter.Body & { circleRadius?: number }).circleRadius || 20;
-          ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
-          ctx.fillStyle = ballColors.current.get(body.id) || '#FFFFFF';
+        const vertices = body.vertices;
+        ctx.moveTo(vertices[0].x, vertices[0].y);
+        for (let j = 1; j < vertices.length; j++) {
+          ctx.lineTo(vertices[j].x, vertices[j].y);
         }
-        
+        ctx.lineTo(vertices[0].x, vertices[0].y);
+        ctx.fillStyle = '#333333';
         ctx.fill();
-        ctx.strokeStyle = '#FFFFFF';
+        ctx.strokeStyle = '#444444';
         ctx.stroke();
+      });
+
+      // 再渲染小球（这样小球会在墙体上方）
+      bodies.filter(body => !body.isStatic).forEach(body => {
+        const pos = body.position;
+        const radius = (body as Matter.Body & { circleRadius?: number }).circleRadius || 20;
+        const baseColor = ballColors.current.get(body.id) || '#FFFFFF';
+        
+        // 添加阴影
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+
+        // 创建径向渐变
+        const gradient = ctx.createRadialGradient(
+          pos.x - radius * 0.3, // 光源 x 偏移
+          pos.y - radius * 0.3, // 光源 y 偏移
+          radius * 0.1,        // 内圆半径
+          pos.x,
+          pos.y,
+          radius
+        );
+        
+        // 解析基础颜色
+        const baseColorRgb = hexToRgb(baseColor);
+        if (!baseColorRgb) return;
+        
+        // 创建高光色和暗部色
+        const highlightColor = `rgba(${baseColorRgb.r + 50}, ${baseColorRgb.g + 50}, ${baseColorRgb.b + 50}, 1)`;
+        const shadowColor = `rgba(${Math.max(0, baseColorRgb.r - 50)}, ${Math.max(0, baseColorRgb.g - 50)}, ${Math.max(0, baseColorRgb.b - 50)}, 1)`;
+        
+        gradient.addColorStop(0, highlightColor);    // 高光
+        gradient.addColorStop(0.5, baseColor);       // 原色
+        gradient.addColorStop(1, shadowColor);       // 暗部
+
+        // 绘制球体
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // 添加高光点
+        ctx.beginPath();
+        ctx.arc(
+          pos.x - radius * 0.3,
+          pos.y - radius * 0.3,
+          radius * 0.2,
+          0,
+          2 * Math.PI
+        );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+
+        // 重置阴影
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
       });
 
       requestRef.current = requestAnimationFrame(render);
@@ -253,6 +302,16 @@ const Game: React.FC<GameProps> = ({
 // 辅助函数
 const random = (min: number, max: number) => {
   return Math.random() * (max - min) + min;
+};
+
+// 辅助函数：将16进制颜色转换为RGB
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
 };
 
 export default Game;
