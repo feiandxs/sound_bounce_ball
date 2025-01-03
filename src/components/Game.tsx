@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import styles from './Game.module.css';
 import { usePhysics } from '../hooks/usePhysics';
 import { useAudio } from '../hooks/useAudio';
@@ -206,6 +206,12 @@ const Game: React.FC<GameProps> = ({
     setAudioSensitivity(newSensitivity);
   };
 
+  // 处理重新请求麦克风权限
+  const handleRequestAudioAccess = useCallback(() => {
+    cleanupAudio();  // 清理现有的音频上下文
+    initAudio();     // 重新初始化音频
+  }, [cleanupAudio, initAudio]);
+
   return (
     <div className={styles.gameContainer} onClick={handleCanvasClick}>
       <canvas
@@ -223,6 +229,7 @@ const Game: React.FC<GameProps> = ({
         sensitivity={sensitivity}
         onSensitivityChange={handleSensitivityChange}
         audioError={audioError}
+        onRequestAudioAccess={handleRequestAudioAccess}
       />
     </div>
   );

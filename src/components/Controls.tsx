@@ -12,6 +12,7 @@ interface ControlsProps {
   sensitivity: number;
   onSensitivityChange: (value: number) => void;
   audioError?: string | null;
+  onRequestAudioAccess?: () => void;
 }
 
 const Controls: React.FC<ControlsProps> = ({
@@ -24,7 +25,8 @@ const Controls: React.FC<ControlsProps> = ({
   onClickModeChange,
   sensitivity,
   onSensitivityChange,
-  audioError
+  audioError,
+  onRequestAudioAccess
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -82,8 +84,19 @@ const Controls: React.FC<ControlsProps> = ({
             className={styles.sensitivitySlider}
           />
           {audioError && (
-            <div className={styles.error}>
-              {audioError}
+            <div className={styles.audioError}>
+              <div className={styles.error}>
+                {audioError}
+              </div>
+              <button 
+                className={styles.retryButton}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequestAudioAccess?.();
+                }}
+              >
+                重新请求麦克风权限
+              </button>
             </div>
           )}
         </div>
